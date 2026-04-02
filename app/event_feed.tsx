@@ -1,41 +1,205 @@
 // File: app/event_feed.tsx
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, FlatList, StyleSheet, ActivityIndicator, Text, TouchableOpacity, Alert, Animated } from 'react-native';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
+import { EventCard, SupabaseEvent } from '../components/EventsCard'; 
 import { useTheme } from '../context/ThemeContext';
+import { Button } from '../components/Button';
+import { UserIcon } from '../components/Icons'; 
 import { rem } from '../utils/sizing';
-import { Image } from 'expo-image'; // Will use this for the user icon
 
-export default function EventFeedScreen() {
+export default function EventFeed() {
   const { themeColor, bgMain } = useTheme();
+  
+  const [events, setEvents] = useState<SupabaseEvent[]>([]);
+  const [username, setUsername] = useState<string>('...');
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  // --- HEADER BLINK ANIMATION ---
+  const headerBlinkAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(headerBlinkAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(headerBlinkAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [headerBlinkAnim]);
+
+  useEffect(() => {
+    const now = new Date();
+    const dateStr = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    setCurrentTime(`${dateStr} @ ${timeStr}`);
+
+    loadFeedData();
+  }, []);
+
+  async function loadFeedData() {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (sessionData.session?.user) {
+        const { data: attendeeData, error: attendeeError } = await supabase
+          .from('attendees')
+          .select('username')
+          .eq('id', sessionData.session.user.id)
+          .single();
+          
+        if (!attendeeError && attendeeData) {
+          setUsername(attendeeData.username);
+        } else {
+          setUsername('User');
+        }
+      } else {
+        const isGuest = await AsyncStorage.getItem('isGuest');
+        if (isGuest) {
+          setUsername('Guest');
+        }
+      }
+
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select(`
+          id,
+          event_name,
+          artists,
+          venue_name,
+          address,
+          start_time,
+          end_time,
+          arrival_instructions,
+          event_description,
+          ticket_link,
+          genres,
+          promoters (
+            promoter_name
+          )
+        `)
+        .eq('status', 'published')
+        .order('start_time', { ascending: true });
+
+      if (eventError) throw eventError;
+      setEvents(eventData as any);
+
+    } catch (err) {
+      console.error('Feed Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // --- THE ONLY CHANGE: WIRED UP LOGOUT LOGIC ---
+  const handleSelfDestruct = async () => {
+    try {
+      // 1. Sign out of Supabase
+      await supabase.auth.signOut();
+      
+      // 2. Clear guest status if they were browsing as a guest
+      await AsyncStorage.removeItem('isGuest');
+      
+      // 3. Route to the post_logout screen
+      router.replace('/post_logout');
+    } catch (error) {
+      console.error('Logout Error:', error);
+      Alert.alert('System Error', 'Failed to initiate self-destruct sequence.');
+    }
+  };
+
+  const renderListHeader = () => (
+    <View style={styles.listHeaderContainer}>
+      <Text style={[styles.terminalText, { color: themeColor }]}>{`> Wake Up, ${username}!`}</Text>
+      <Text style={[styles.terminalText, { color: themeColor }]}>{`> It is ${currentTime}`}</Text>
+      <Text style={[styles.terminalText, styles.spacingBottom, { color: themeColor }]}>{`> Upcoming Events`}</Text>
+    </View>
+  );
+
+  const renderListFooter = () => (
+    <View style={styles.listFooterContainer}>
+      <Button 
+        title="Tap to Self-Destruct" 
+        onPress={handleSelfDestruct} 
+        variant="filled" 
+      />
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: bgMain, justifyContent: 'center' }]}>
+        <ActivityIndicator color={themeColor} size="large" />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: bgMain }]}>
       
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: themeColor }]}>Infolines_</Text>
-        <TouchableOpacity onPress={() => router.push('/user_management')} style={[styles.profileBox, { borderColor: themeColor }]}>
-          {/* Placeholder for User Icon */}
-          <View style={[styles.iconPlaceholder, { backgroundColor: themeColor }]} />
+      <View style={styles.pinnedHeader}>
+        <View style={styles.titleRow}>
+          <Text style={[styles.logoText, { color: themeColor }]}>Infolines</Text>
+          <Animated.Text style={[styles.logoText, { color: themeColor, opacity: headerBlinkAnim }]}>
+            _
+          </Animated.Text>
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.profileButton}
+          onPress={() => router.push('/user_management')}
+        >
+          <UserIcon color={themeColor} size={rem(2.5)} /> 
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.feed}>
-        <Text style={[styles.greeting, { color: themeColor }]}>{'> Wake Up, Dan_D!'}</Text>
-        <Text style={[styles.subText, { color: themeColor }]}>{'> Loading Transmissions...'}</Text>
-      </ScrollView>
-
+      <FlatList
+        data={events}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.cardWrapper}>
+            <EventCard event={item} />
+          </View>
+        )}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={renderListHeader}
+        ListFooterComponent={events.length > 0 ? renderListFooter : null}
+        ListEmptyComponent={
+          <Text style={[styles.emptyText, { color: themeColor }]}>
+            {'>'} No live events found_
+          </Text>
+        }
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: rem(4), paddingHorizontal: rem(1.5), paddingBottom: rem(2) },
-  title: { fontFamily: 'PressStart2P', fontSize: rem(1.25) },
-  profileBox: { borderWidth: rem(0.125), width: rem(2.5), height: rem(2.5), alignItems: 'center', justifyContent: 'center', padding: rem(0.25) },
-  iconPlaceholder: { width: '100%', height: '100%' },
-  feed: { paddingHorizontal: rem(1.5), paddingTop: rem(2) },
-  greeting: { fontFamily: 'PressStart2P', fontSize: rem(0.75), marginBottom: rem(1.5), lineHeight: rem(1.5) },
-  subText: { fontFamily: 'PressStart2P', fontSize: rem(0.75), lineHeight: rem(1.5) },
+  pinnedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: rem(1),
+    paddingTop: rem(4), 
+    paddingBottom: rem(1),
+  },
+  titleRow: { flexDirection: 'row' },
+  logoText: { fontFamily: 'PressStart2P', fontSize: rem(1.5) },
+  profileButton: {
+    width: rem(3), 
+    height: rem(3),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: { paddingHorizontal: rem(1), paddingTop: rem(1), paddingBottom: rem(4) },
+  listHeaderContainer: { marginBottom: rem(1), gap: rem(1) },
+  terminalText: { fontFamily: 'PressStart2P', fontSize: rem(0.85), lineHeight: rem(1.4) },
+  spacingBottom: { marginBottom: rem(1) },
+  cardWrapper: { marginBottom: rem(1) },
+  listFooterContainer: { marginTop: rem(0.5), marginBottom: rem(1) },
+  emptyText: { fontFamily: 'PressStart2P', fontSize: rem(0.85), textAlign: 'center', marginTop: rem(4) }
 });
