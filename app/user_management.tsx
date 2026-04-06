@@ -27,6 +27,7 @@ export default function UserManagementScreen() {
 
   const handleLogout = async () => {
     try {
+      await AsyncStorage.setItem('last_username', 'User'); // Generic fallback
       await supabase.auth.signOut();
       await AsyncStorage.removeItem('isGuest');
       router.replace('/post_logout');
@@ -57,7 +58,7 @@ export default function UserManagementScreen() {
         </TouchableOpacity>
 
         <View style={styles.colorSection}>
-          <Text style={[styles.menuText, { color: themeColor, marginBottom: rem(1.5) }]}>{'> Color Settings'}</Text>
+          <Text style={[styles.menuText, { color: themeColor, marginBottom: rem(1) }]}>{'> Color Settings'}</Text>
           
           <View style={styles.colorRow}>
             {colors.map((c) => (
@@ -77,24 +78,19 @@ export default function UserManagementScreen() {
           <Text style={[styles.menuText, { color: themeColor }]}>{'> Promoters'}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.menuItem, { opacity: 0.7 }]} activeOpacity={0.7}>
-          <Text style={[styles.menuText, { color: themeColor }]}>{'> Receive NFC'}</Text>
-          <Text style={[styles.subText, { color: themeColor }]}>[Coming Soon!]</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.menuItem, { opacity: 0.7 }]} activeOpacity={0.7}>
-          <Text style={[styles.menuText, { color: themeColor }]}>{'> Scan QR'}</Text>
-          <Text style={[styles.subText, { color: themeColor }]}>[Coming Soon!]</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
           <Text style={[styles.menuText, { color: themeColor }]}>{'> Log Out'}</Text>
+        </TouchableOpacity>
+
+        {/* --- NEW DELETE ACCOUNT BUTTON --- */}
+        <TouchableOpacity style={[styles.menuItem, { marginTop: rem(0.25
+        ) }]} onPress={() => router.push('/delete_account')}>
+          <Text style={[styles.menuText, { color: '#FF0033' }]}>{'> Delete Account'}</Text>
         </TouchableOpacity>
 
       </ScrollView>
 
       <View style={styles.footer}>
-        {/* Reverted to variant="filled" for "Close" */}
         <Button title="Close" onPress={() => router.back()} variant="filled" />
       </View>
     </View>
@@ -113,31 +109,12 @@ const styles = StyleSheet.create({
   },
   titleRow: { flexDirection: 'row' },
   logoText: { fontFamily: 'PressStart2P', fontSize: rem(1.5) },
-  closeButton: { 
-    width: rem(3), 
-    height: rem(3), 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  },
-  menuItem: { 
-    minHeight: rem(3.5), // Guaranteed 56px tap area for comfort
-    justifyContent: 'center', 
-    paddingVertical: rem(1) // Increased spacing between items
-  },
+  closeButton: { width: rem(3), height: rem(3), alignItems: 'center', justifyContent: 'center' },
+  menuItem: { minHeight: rem(3.5), justifyContent: 'center', paddingVertical: rem(1) },
   menuText: { fontFamily: 'PressStart2P', fontSize: rem(0.9), lineHeight: rem(1.4) },
-  subText: { 
-    fontFamily: 'PressStart2P', 
-    fontSize: rem(0.65), 
-    marginTop: rem(0.4), 
-    marginLeft: rem(1.2) 
-  },
-  colorSection: { paddingVertical: rem(2) }, // More breathing room for color grid
+  subText: { fontFamily: 'PressStart2P', fontSize: rem(0.65), marginTop: rem(0.4), marginLeft: rem(1.2) },
+  colorSection: { paddingVertical: rem(2) },
   colorRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, 
-  colorSwatch: { 
-    width: rem(2.25), 
-    height: rem(2.25), 
-    alignItems: 'center', 
-    justifyContent: 'center',
-  },
+  colorSwatch: { width: rem(2.25), height: rem(2.25), alignItems: 'center', justifyContent: 'center' },
   footer: { position: 'absolute', bottom: rem(2), left: rem(1.5), right: rem(1.5) }
 });

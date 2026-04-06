@@ -68,24 +68,6 @@ export default function PromoterListScreen() {
                 <Text style={[styles.promoterText, { color: themeColor }]}>
                   {`> ${item.promoter_name}`}
                 </Text>
-                
-                <View style={styles.actionRow}>
-                  {/* NFC Icon - Size matched to Close X (rem 2.5) */}
-                  <TouchableOpacity 
-                    style={[styles.actionButton, { opacity: 0.7 }]}
-                    disabled={true}
-                  >
-                     <NfcIcon color={themeColor} size={rem(2.5)} />
-                  </TouchableOpacity>
-
-                  {/* QR Icon - Size matched to Close X (rem 2.5) */}
-                  <TouchableOpacity 
-                    style={[styles.actionButton, { opacity: 0.7 }]}
-                    disabled={true}
-                  >
-                    <QrIcon color={themeColor} size={rem(2.5)} />
-                  </TouchableOpacity>
-                </View>
               </View>
             ))}
           </>

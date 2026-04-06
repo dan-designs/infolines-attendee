@@ -62,6 +62,9 @@ export default function EventFeed() {
         }
       }
 
+      // Capture the exact moment this function runs in ISO format
+      const currentIsoTime = new Date().toISOString();
+
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .select(`
@@ -81,6 +84,8 @@ export default function EventFeed() {
           )
         `)
         .eq('status', 'published')
+        // THE FIX: Only fetch events where end_time is Greater Than or Equal to right now
+        .gte('end_time', currentIsoTime)
         .order('start_time', { ascending: true });
 
       if (eventError) throw eventError;
@@ -93,16 +98,11 @@ export default function EventFeed() {
     }
   }
 
-  // --- THE ONLY CHANGE: WIRED UP LOGOUT LOGIC ---
   const handleSelfDestruct = async () => {
     try {
-      // 1. Sign out of Supabase
+      await AsyncStorage.setItem('last_username', username);
       await supabase.auth.signOut();
-      
-      // 2. Clear guest status if they were browsing as a guest
       await AsyncStorage.removeItem('isGuest');
-      
-      // 3. Route to the post_logout screen
       router.replace('/post_logout');
     } catch (error) {
       console.error('Logout Error:', error);
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: rem(1),
+    paddingHorizontal: rem(1.5),
     paddingTop: rem(4), 
     paddingBottom: rem(1),
   },
@@ -195,11 +195,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listContent: { paddingHorizontal: rem(1), paddingTop: rem(1), paddingBottom: rem(4) },
+  listContent: { paddingHorizontal: rem(1.5), paddingTop: rem(1), paddingBottom: rem(4) },
   listHeaderContainer: { marginBottom: rem(1), gap: rem(1) },
   terminalText: { fontFamily: 'PressStart2P', fontSize: rem(0.85), lineHeight: rem(1.4) },
   spacingBottom: { marginBottom: rem(1) },
   cardWrapper: { marginBottom: rem(1) },
-  listFooterContainer: { marginTop: rem(0.5), marginBottom: rem(1) },
+  listFooterContainer: { marginTop: rem(2), marginBottom: rem(2) },
   emptyText: { fontFamily: 'PressStart2P', fontSize: rem(0.85), textAlign: 'center', marginTop: rem(4) }
 });
