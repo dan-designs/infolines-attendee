@@ -13,15 +13,17 @@
       "backgroundColor": "#111111"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.infolines.attendee"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.infolines.attendee",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.infolines.attendee"
+      "package": "com.infolines.attendee",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png",
