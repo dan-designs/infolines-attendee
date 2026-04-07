@@ -8,14 +8,13 @@ interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'filled' | 'underline' | 'ghost';
-  color?: string; // Optional override color
+  color?: string;
   style?: ViewStyle;
 }
 
 export function Button({ title, onPress, variant = 'filled', color, style }: ButtonProps) {
   const { themeColor, bgMain } = useTheme();
 
-  // Core Logic: If a specific color is passed, use it. Otherwise, default to the user's theme.
   const activeColor = color || themeColor;
 
   let containerStyle: ViewStyle = {};
@@ -23,9 +22,15 @@ export function Button({ title, onPress, variant = 'filled', color, style }: But
 
   if (variant === 'filled') {
     containerStyle = { backgroundColor: activeColor };
-    textStyle = { color: bgMain }; // Text becomes background color to pop out
+    textStyle = { color: bgMain };
   } else if (variant === 'underline') {
-    textStyle = { color: activeColor, textDecorationLine: 'underline' };
+    // FIX: Applies a solid line to the bottom of the button container
+    containerStyle = { 
+      borderBottomWidth: 2, 
+      borderBottomColor: activeColor,
+      borderRadius: 0 // Ensures crisp terminal corners
+    };
+    textStyle = { color: activeColor };
   } else if (variant === 'ghost') {
     textStyle = { color: activeColor };
   }
@@ -45,7 +50,7 @@ export function Button({ title, onPress, variant = 'filled', color, style }: But
 
 const styles = StyleSheet.create({
   baseButton: {
-    minHeight: rem(3.5), // Guarantees Apple's minimum hit area
+    minHeight: rem(3.5),
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: rem(1.5),

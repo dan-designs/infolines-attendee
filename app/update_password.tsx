@@ -1,4 +1,4 @@
-// File: app/password_reset.tsx
+// File: app/update_password.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
@@ -107,16 +107,19 @@ const TerminalInput = React.memo(({
   );
 });
 
-export default function PasswordResetScreen() {
+export default function UpdatePasswordScreen() {
   const { themeColor, bgMain } = useTheme();
 
-  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
   const headerBlinkAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -150,36 +153,41 @@ export default function PasswordResetScreen() {
     clearError(fieldKey); 
   };
 
-  const handleReset = async () => {
+  const handleUpdatePassword = async () => {
     if (isLoading) return;
 
     const newErrors: string[] = [];
-    if (!email.trim()) newErrors.push('email');
+    if (!password || password.length < 6) newErrors.push('password');
+    if (password !== confirmPassword) newErrors.push('confirmPassword');
 
     if (newErrors.length > 0) {
       setErrors(newErrors);
+      if (newErrors.includes('confirmPassword')) {
+        Alert.alert('Error', 'Passwords do not match.');
+      } else if (newErrors.includes('password')) {
+        Alert.alert('Error', 'Password must be at least 6 characters.');
+      }
       return; 
     }
 
     setIsLoading(true);
 
     try {
-      // THE MAGIC LINK UPDATE IS HERE
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: 'infolines://update_password', 
-      });
+      // Supabase authenticated them automatically via the deep link token
+      // so this updates the current user's password directly.
+      const { error } = await supabase.auth.updateUser({ password: password });
 
       if (error) throw error;
 
       Alert.alert(
-        'Check Your Inbox',
-        'If an account exists with that email, we have sent a password reset link.',
-        [{ text: 'OK', onPress: () => router.back() }] 
+        'Success',
+        'Your password has been securely updated.',
+        [{ text: 'OK', onPress: () => router.replace('/') }] // Sends them to root/login
       );
 
     } catch (err: any) {
-      console.error('Reset error:', err);
-      Alert.alert('System Error', 'Unable to process request at this time.');
+      console.error('Update error:', err);
+      Alert.alert('System Error', 'Unable to update password. Your session link may have expired.');
     } finally {
       setIsLoading(false);
     }
@@ -192,10 +200,10 @@ export default function PasswordResetScreen() {
     >
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: themeColor }]}>Reset</Text>
+          <Text style={[styles.title, { color: themeColor }]}>New Pwd</Text>
           <Animated.Text style={[styles.title, { color: themeColor, opacity: headerBlinkAnim }]}>_</Animated.Text>
         </View>
-        <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.closeButton} onPress={() => router.replace('/')}>
           <CloseIcon color={themeColor} size={rem(2.5)} />
         </TouchableOpacity>
       </View>
@@ -208,19 +216,35 @@ export default function PasswordResetScreen() {
       >
         <View style={styles.formContainer}>
           <TerminalInput
-            label="Email"
-            inputRef={emailRef}
-            value={email}
-            onChangeText={(text: string) => handleChangeText('email', setEmail, text)}
-            fieldKey="email"
-            keyboardType="email-address"
+            label="New Password"
+            inputRef={passwordRef}
+            value={password}
+            onChangeText={(text: string) => handleChangeText('password', setPassword, text)}
+            secureTextEntry={true}
+            fieldKey="password"
             focusedField={focusedField}
             onFocus={handleFocus}
-            hasError={errors.includes('email')}
+            hasError={errors.includes('password')}
+            themeColor={themeColor}
+            bgMain={bgMain}
+            returnKeyType="next"
+            onSubmitEditing={() => confirmPasswordRef.current?.focus()} 
+          />
+
+          <TerminalInput
+            label="Confirm Password"
+            inputRef={confirmPasswordRef}
+            value={confirmPassword}
+            onChangeText={(text: string) => handleChangeText('confirmPassword', setConfirmPassword, text)}
+            secureTextEntry={true}
+            fieldKey="confirmPassword"
+            focusedField={focusedField}
+            onFocus={handleFocus}
+            hasError={errors.includes('confirmPassword')}
             themeColor={themeColor}
             bgMain={bgMain}
             returnKeyType="done"
-            onSubmitEditing={handleReset} 
+            onSubmitEditing={handleUpdatePassword} 
           />
         </View>
       </ScrollView>
@@ -228,8 +252,8 @@ export default function PasswordResetScreen() {
       <View style={[styles.actionContainer, isKeyboardVisible && styles.actionContainerKeyboardOpen]}>
         <View style={styles.buttonWrapper}>
           <Button 
-            title={isLoading ? "Processing..." : "Send Reset Link"} 
-            onPress={handleReset} 
+            title={isLoading ? "Updating..." : "Save Password"} 
+            onPress={handleUpdatePassword} 
             variant="filled" 
           />
         </View>
@@ -237,7 +261,7 @@ export default function PasswordResetScreen() {
           <>
             <View style={styles.spacer} />
             <View style={styles.buttonWrapper}>
-              <Button title="Back" onPress={() => router.back()} variant="ghost" />
+              <Button title="Cancel" onPress={() => router.replace('/')} variant="ghost" />
             </View>
             <View style={[styles.bottomLine, { backgroundColor: themeColor }]} />
           </>

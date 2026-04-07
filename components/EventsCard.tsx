@@ -97,7 +97,7 @@ export function EventCard({ event }: EventCardProps) {
   }
 
   return (
-    <View style={[styles.cardContainer, { backgroundColor: '#1A1A1A' }]}>
+    <View style={[styles.cardContainer, { backgroundColor: '#111111' }]}>
       
       {/* --- COLLAPSED CARD VIEW --- */}
       <View style={styles.header}>
@@ -165,11 +165,12 @@ export function EventCard({ event }: EventCardProps) {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: bgMain, borderColor: themeColor }]}>
             
-            <Text style={[styles.title, { color: themeColor, marginBottom: rem(1) }]}>
-              {`> ${event.event_name}`}
-            </Text>
-            
             <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Added flex: 0 here so the ScrollView doesn't collapse the text to a height of zero! */}
+              <Text style={[styles.title, { color: themeColor, marginTop: rem(0.5), marginBottom: rem(1.5), flex: 0 }]}>
+                {`> ${event.event_name}`}
+              </Text>
+
               <View style={styles.modalSection}>
                 <Text style={[styles.labelText, { color: themeColor }]}>Artists:</Text>
                 <Text style={[styles.infoText, { color: themeColor }]}>{event.artists}</Text>
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
     marginBottom: rem(0.5) 
   },
   title: { 
-    flex: 1, // Ensures text takes up available space but leaves room for the button
+    flex: 1, 
     fontFamily: 'PressStart2P', 
     fontSize: rem(1.2), 
     lineHeight: rem(1.5),
@@ -370,7 +371,6 @@ const styles = StyleSheet.create({
     fontFamily: 'PressStart2P', 
     fontSize: rem(1) 
   },
-  // --- EXISTING DETAILS MODAL STYLES ---
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.85)', 
@@ -394,7 +394,6 @@ const styles = StyleSheet.create({
     opacity: 0.7, 
     marginBottom: rem(0.35),
   },
-  // --- NEW MODERATION MODAL STYLES (Matched to Promoter List) ---
   modalBox: { 
     width: '100%', 
     borderWidth: 2, 
