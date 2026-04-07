@@ -77,3 +77,17 @@ export function DownloadIcon({ color, size }: IconProps) {
     </Svg>
   );
 }
+
+export function MoreVerticalIcon({ color, size }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      {/* Outer 48x48 Border Box */}
+      <Rect x="2" y="2" width="44" height="44" stroke={color} strokeWidth="0"/>
+      
+      {/* Vertical Dots (Meatball) */}
+      <Rect x="21" y="10" width="6" height="6" fill={color} />
+      <Rect x="21" y="21" width="6" height="6" fill={color} />
+      <Rect x="21" y="32" width="6" height="6" fill={color} />
+    </Svg>
+  );
+}

@@ -11,7 +11,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType>({
   themeColor: '#24FF00', 
   setThemeColor: () => {},
-  bgMain: '#222222',
+  bgMain: '#000000',
   bgCard: '#111111',
 });
 
@@ -24,7 +24,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     <ThemeContext.Provider value={{ 
       themeColor, 
       setThemeColor,
-      bgMain: '#222222',
+      bgMain: '#000000',
       bgCard: '#111111'
     }}>
       {children}

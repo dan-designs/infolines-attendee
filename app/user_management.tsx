@@ -67,8 +67,11 @@ export default function UserManagementScreen() {
                 style={[styles.colorSwatch, { backgroundColor: c }]} 
                 onPress={() => setThemeColor(c)}
                 activeOpacity={0.8}
+                // Adds an invisible 48px+ touch target around the 36px visual box
+                hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
               >
-                {themeColor === c && <CloseIcon color={bgMain} size={rem(1.5)} />}
+                {/* Increased size to 2.25rem to perfectly fill the swatch space */}
+                {themeColor === c && <CloseIcon color={bgMain} size={rem(2.25)} />}
               </TouchableOpacity>
             ))}
           </View>
@@ -83,8 +86,7 @@ export default function UserManagementScreen() {
         </TouchableOpacity>
 
         {/* --- NEW DELETE ACCOUNT BUTTON --- */}
-        <TouchableOpacity style={[styles.menuItem, { marginTop: rem(0.25
-        ) }]} onPress={() => router.push('/delete_account')}>
+        <TouchableOpacity style={[styles.menuItem, { marginTop: rem(0.25) }]} onPress={() => router.push('/delete_account')}>
           <Text style={[styles.menuText, { color: '#FF0033' }]}>{'> Delete Account'}</Text>
         </TouchableOpacity>
 
