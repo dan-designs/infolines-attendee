@@ -173,16 +173,20 @@ export default function UpdatePasswordScreen() {
     setIsLoading(true);
 
     try {
-      // Supabase authenticated them automatically via the deep link token
-      // so this updates the current user's password directly.
-      const { error } = await supabase.auth.updateUser({ password: password });
+      // 1. Update the password via the current temporary session
+      const { error: updateError } = await supabase.auth.updateUser({ 
+        password: password 
+      });
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // 2. Sign out to clear the temporary session and ensure a clean state
+      await supabase.auth.signOut();
 
       Alert.alert(
         'Success',
-        'Your password has been securely updated.',
-        [{ text: 'OK', onPress: () => router.replace('/') }] // Sends them to root/login
+        'Your password has been securely updated. Please log in.',
+        [{ text: 'OK', onPress: () => router.replace('/login') }] 
       );
 
     } catch (err: any) {
@@ -200,10 +204,10 @@ export default function UpdatePasswordScreen() {
     >
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: themeColor }]}>New Pwd</Text>
+          <Text style={[styles.title, { color: themeColor }]}>New Password</Text>
           <Animated.Text style={[styles.title, { color: themeColor, opacity: headerBlinkAnim }]}>_</Animated.Text>
         </View>
-        <TouchableOpacity style={styles.closeButton} onPress={() => router.replace('/')}>
+        <TouchableOpacity style={styles.closeButton} onPress={() => router.replace('/login')}>
           <CloseIcon color={themeColor} size={rem(2.5)} />
         </TouchableOpacity>
       </View>
@@ -261,7 +265,7 @@ export default function UpdatePasswordScreen() {
           <>
             <View style={styles.spacer} />
             <View style={styles.buttonWrapper}>
-              <Button title="Cancel" onPress={() => router.replace('/')} variant="ghost" />
+              <Button title="Cancel" onPress={() => router.replace('/login')} variant="ghost" />
             </View>
             <View style={[styles.bottomLine, { backgroundColor: themeColor }]} />
           </>
@@ -275,7 +279,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: rem(1.5), marginTop: rem(4), marginBottom: rem(2) },
   titleRow: { flexDirection: 'row' },
-  title: { fontFamily: 'PressStart2P', fontSize: rem(1.5) },
+  title: { fontFamily: 'PressStart2P', fontSize: rem(1.2) },
   closeButton: { width: rem(3), height: rem(3), justifyContent: 'center', alignItems: 'center' },
   scrollArea: { flex: 1 },
   scrollContent: { paddingHorizontal: rem(1.5), paddingBottom: rem(2) },
