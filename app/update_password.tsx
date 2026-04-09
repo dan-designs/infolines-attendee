@@ -13,7 +13,7 @@ import {
   Keyboard,
   Alert
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from '../components/Button';
 import { CloseIcon } from '../components/Icons';
@@ -109,6 +109,9 @@ const TerminalInput = React.memo(({
 
 export default function UpdatePasswordScreen() {
   const { themeColor, bgMain } = useTheme();
+  
+  // 1. Extract potential auth tokens or codes from the deep link
+  const { access_token, refresh_token, code, error_description } = useLocalSearchParams();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -121,6 +124,32 @@ export default function UpdatePasswordScreen() {
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
   const headerBlinkAnim = useRef(new Animated.Value(1)).current;
+
+  // 2. Establish the session as soon as the screen loads
+  useEffect(() => {
+    const establishSession = async () => {
+      if (error_description) {
+        Alert.alert('Link Error', error_description as string);
+        return;
+      }
+
+      // Handle PKCE flow
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code as string);
+        if (error) console.error('Error exchanging code:', error);
+      } 
+      // Handle Implicit flow
+      else if (access_token && refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token: access_token as string,
+          refresh_token: refresh_token as string,
+        });
+        if (error) console.error('Error setting session:', error);
+      }
+    };
+
+    establishSession();
+  }, [access_token, refresh_token, code, error_description]);
 
   useEffect(() => {
     Animated.loop(

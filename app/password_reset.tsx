@@ -14,6 +14,7 @@ import {
   Alert
 } from 'react-native';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from '../components/Button';
 import { CloseIcon } from '../components/Icons';
@@ -164,9 +165,11 @@ export default function PasswordResetScreen() {
     setIsLoading(true);
 
     try {
-      // THE MAGIC LINK UPDATE IS HERE
+      // Create the dynamic redirect URL for the compiled environment
+      const resetUrl = Linking.createURL('/update_password');
+
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: 'infolines://update_password', 
+        redirectTo: resetUrl, 
       });
 
       if (error) throw error;
