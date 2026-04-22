@@ -3,11 +3,12 @@ import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { ThemeProvider } from '../context/ThemeContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { CRTOverlay } from '../components/CRTOverlay'; // <-- IMPORTED OVERLAY
+import { CRTOverlay } from '../components/CRTOverlay';
 
 export default function RootLayout() {
   // Load the custom font before rendering the app
   const [fontsLoaded] = useFonts({
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     'PressStart2P': require('../assets/fonts/PressStart2P-Regular.ttf'),
   });
 
@@ -32,6 +33,9 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
           <Stack.Screen name="create" />
           <Stack.Screen name="password_reset" />
+          
+          {/* <Stack.Screen name="update_password" /> REMOVED: Now handled via web route on PWA */}
+          
           <Stack.Screen name="event_feed" />
           <Stack.Screen name="user_management" />
           <Stack.Screen name="promoter_list" />

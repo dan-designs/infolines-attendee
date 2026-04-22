@@ -66,7 +66,7 @@ export default function EventFeed() {
       const currentIsoTime = new Date().toISOString();
 
       const { data: eventData, error: eventError } = await supabase
-        .from('events')
+        .from('attendee_feed') 
         .select(`
           id,
           event_name,
@@ -83,13 +83,13 @@ export default function EventFeed() {
             promoter_name
           )
         `)
-        .eq('status', 'published')
-        // THE FIX: Only fetch events where end_time is Greater Than or Equal to right now
         .gte('end_time', currentIsoTime)
         .order('start_time', { ascending: true });
 
       if (eventError) throw eventError;
-      setEvents(eventData as any);
+      
+      // THE FIX: Type cast strictly to SupabaseEvent[] instead of any
+      setEvents((eventData as unknown) as SupabaseEvent[]);
 
     } catch (err) {
       console.error('Feed Error:', err);
